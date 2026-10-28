@@ -1,0 +1,15 @@
+# Étape 0 : CouchDB seul, pour tester à la main avec curl.
+services:
+  couchdb:
+    image: couchdb:3.4
+    container_name: couchdb
+    environment:
+      COUCHDB_USER: admin
+      COUCHDB_PASSWORD: admin
+    ports:
+      - "5984:5984"
+    volumes:
+      - couchdb-data:/opt/couchdb/data
+
+volumes:
+  couchdb-data:
