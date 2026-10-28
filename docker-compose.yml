@@ -1,4 +1,4 @@
-# Étape 0 : CouchDB. Étape 1 : service notes. Étape 2 : service projets.
+# Étape 0 : CouchDB. Étape 1 : service notes. Étape 2 : service projets. Étape 3 : proxy nginx.
 services:
   couchdb:
     image: couchdb:3.4
@@ -37,6 +37,17 @@ services:
     depends_on:
       couchdb:
         condition: service_healthy
+
+  nginx:
+    image: nginx:1.27
+    container_name: nginx
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    ports:
+      - "8080:80"
+    depends_on:
+      - notes
+      - projects
 
 volumes:
   couchdb-data:
