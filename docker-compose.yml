@@ -1,4 +1,4 @@
-# Étape 0 : CouchDB seul, pour tester à la main avec curl.
+# Étape 0 : CouchDB. Étape 1 : service notes.
 services:
   couchdb:
     image: couchdb:3.4
@@ -10,6 +10,21 @@ services:
       - "5984:5984"
     volumes:
       - couchdb-data:/opt/couchdb/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5984/_up"]
+      interval: 2s
+      retries: 30
+
+  notes:
+    build: ./notes
+    container_name: notes
+    environment:
+      COUCHDB_URL: http://admin:admin@couchdb:5984
+    ports:
+      - "8001:8000"
+    depends_on:
+      couchdb:
+        condition: service_healthy
 
 volumes:
   couchdb-data:
