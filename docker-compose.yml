@@ -1,53 +1,109 @@
-# Étape 0 : CouchDB. Étape 1 : service notes. Étape 2 : service projets. Étape 3 : proxy nginx.
+# Étape 4 : deux régions A et B. Chaque région a son CouchDB, ses deux services et son nginx.
+# Région A : nginx 8080, notes 8001, projets 8002, CouchDB 5984.
+# Région B : nginx 8090, notes 8011, projets 8012, CouchDB 5985.
 services:
-  couchdb:
+  # ---------- Région A ----------
+  couchdb-a:
     image: couchdb:3.4
-    container_name: couchdb
+    container_name: couchdb-a
     environment:
       COUCHDB_USER: admin
       COUCHDB_PASSWORD: admin
     ports:
       - "5984:5984"
     volumes:
-      - couchdb-data:/opt/couchdb/data
+      - couchdb-a-data:/opt/couchdb/data
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:5984/_up"]
       interval: 2s
       retries: 30
 
-  notes:
+  notes-a:
     build: ./notes
-    container_name: notes
+    container_name: notes-a
     environment:
-      COUCHDB_URL: http://admin:admin@couchdb:5984
+      COUCHDB_URL: http://admin:admin@couchdb-a:5984
     ports:
       - "8001:8000"
     depends_on:
-      couchdb:
+      couchdb-a:
         condition: service_healthy
 
-  projects:
+  projects-a:
     build: ./projects
-    container_name: projects
+    container_name: projects-a
     environment:
-      COUCHDB_URL: http://admin:admin@couchdb:5984
+      COUCHDB_URL: http://admin:admin@couchdb-a:5984
       REGION: A
     ports:
       - "8002:8000"
     depends_on:
-      couchdb:
+      couchdb-a:
         condition: service_healthy
 
-  nginx:
+  nginx-a:
     image: nginx:1.27
-    container_name: nginx
+    container_name: nginx-a
     volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/region-a.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/routage.conf:/etc/nginx/routage.conf:ro
     ports:
       - "8080:80"
     depends_on:
-      - notes
-      - projects
+      - notes-a
+      - projects-a
+
+  # ---------- Région B ----------
+  couchdb-b:
+    image: couchdb:3.4
+    container_name: couchdb-b
+    environment:
+      COUCHDB_USER: admin
+      COUCHDB_PASSWORD: admin
+    ports:
+      - "5985:5984"
+    volumes:
+      - couchdb-b-data:/opt/couchdb/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5984/_up"]
+      interval: 2s
+      retries: 30
+
+  notes-b:
+    build: ./notes
+    container_name: notes-b
+    environment:
+      COUCHDB_URL: http://admin:admin@couchdb-b:5984
+    ports:
+      - "8011:8000"
+    depends_on:
+      couchdb-b:
+        condition: service_healthy
+
+  projects-b:
+    build: ./projects
+    container_name: projects-b
+    environment:
+      COUCHDB_URL: http://admin:admin@couchdb-b:5984
+      REGION: B
+    ports:
+      - "8012:8000"
+    depends_on:
+      couchdb-b:
+        condition: service_healthy
+
+  nginx-b:
+    image: nginx:1.27
+    container_name: nginx-b
+    volumes:
+      - ./nginx/region-b.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/routage.conf:/etc/nginx/routage.conf:ro
+    ports:
+      - "8090:80"
+    depends_on:
+      - notes-b
+      - projects-b
 
 volumes:
-  couchdb-data:
+  couchdb-a-data:
+  couchdb-b-data:
