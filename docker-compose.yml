@@ -1,4 +1,4 @@
-# Étape 0 : CouchDB. Étape 1 : service notes.
+# Étape 0 : CouchDB. Étape 1 : service notes. Étape 2 : service projets.
 services:
   couchdb:
     image: couchdb:3.4
@@ -22,6 +22,18 @@ services:
       COUCHDB_URL: http://admin:admin@couchdb:5984
     ports:
       - "8001:8000"
+    depends_on:
+      couchdb:
+        condition: service_healthy
+
+  projects:
+    build: ./projects
+    container_name: projects
+    environment:
+      COUCHDB_URL: http://admin:admin@couchdb:5984
+      REGION: A
+    ports:
+      - "8002:8000"
     depends_on:
       couchdb:
         condition: service_healthy
